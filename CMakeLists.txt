@@ -1,0 +1,82 @@
+cmake_minimum_required(VERSION 3.4)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+option(BUILD_COVERAGE "Build coverage" OFF)
+
+set(
+        HUNTER_CACHE_SERVERS
+        "https://github.com/bmstu-iu8-cpp-sem-3/hunter-cache"
+        CACHE STRING "Default cache server"
+)
+set (CMAKE_POSITION_INDEPENDENT_CODE ON)
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+
+include("tools/gate/HunterGate.cmake")
+
+HunterGate(
+        URL "https://github.com/cpp-pm/hunter/archive/v0.23.218.tar.gz"
+        SHA1 "9a3594a61227967fb92159339ba326701b287b19"
+)
+
+
+# TODO: rename project and delete this comment
+project(template)
+string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
+string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
+
+hunter_add_package(GTest)
+find_package(GTest CONFIG REQUIRED)
+hunter_add_package(Boost
+        COMPONENTS
+        program_options
+        thread
+        log
+        filesystem)
+find_package(Boost
+        CONFIG REQUIRED
+        program_options
+        thread
+        log
+        log_setup
+        filesystem)
+
+hunter_add_package(rocksdb)
+find_package(RocksDB CONFIG REQUIRED)
+find_package(Threads)
+
+# TODO: change template word to project name and delete this comment
+add_library(template STATIC
+        # enum your files and delete this comment
+        ${CMAKE_CURRENT_SOURCE_DIR}/sources/DBHashCreator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/sources/main.cpp
+        )
+add_executable(tests
+        # TODO: enum your files and delete this comment
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test.cpp
+        )
+
+# TODO: change template word to project name and delete this comment
+target_include_directories(template
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+target_include_directories(tests
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+# TODO: change template word to project name and delete this comment
+target_link_libraries(tests GTest::main ${PROJECT_NAME})
+
+target_link_libraries(template Boost::log Boost::thread Boost::program_options Boost::log_setup Boost::filesystem
+        RocksDB::rocksdb)
+
+enable_testing()
+add_test(NAME unit_tests COMMAND tests)
+
+if(BUILD_COVERAGE)
+set(ENABLE_COVERAGE ON CACHE BOOL "Enable coverage build." FORCE)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+find_package(codecov)
+# TODO: change template word to project name and delete this comment
+endif()
